@@ -11,6 +11,8 @@ class User extends Authenticatable
 {
     use Notifiable;
 
+    protected $table = 'users';
+
     public const VERIFIED_USER = '1';
     public const UNVERIFIED_USER = '0';
 
