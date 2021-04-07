@@ -2,30 +2,33 @@
 
 namespace App\Http\Controllers\User;
 
+use App\Http\Controllers\ApiController;
 use App\Http\Controllers\Controller;
 use App\User;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 
-class UserController extends Controller
+class UserController extends ApiController
 {
     /**
      * Display a listing of the resource.
      *
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function index()
     {
         $users = User::all();
 
-        return response()->json(['data' => $users], 200);
+        return $this->returnAll($users);
     }
 
 
     /**
      * Store a newly created resource in storage.
      *
-     * @param \Illuminate\Http\Request $request
-     * @return \Illuminate\Http\Response
+     * @param Request $request
+     * @return JsonResponse
      */
     public function store(Request $request)
     {
@@ -45,28 +48,28 @@ class UserController extends Controller
 
         $user = User::create($data);
 
-        return response()->json(['data' => $user], 201);
+        return $this->returnOne($user, 201);
     }
 
     /**
      * Display the specified resource.
      *
      * @param int $id
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function show($id)
     {
         $user = User::findOrFail($id);
 
-        return response()->json(['data' => $user], 200);
+        return $this->returnOne($user);
     }
 
     /**
      * Update the specified resource in storage.
      *
-     * @param \Illuminate\Http\Request $request
+     * @param Request $request
      * @param int $id
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function update(Request $request, $id)
     {
@@ -94,24 +97,24 @@ class UserController extends Controller
 
         if ($request->has('admin')) {
             if ( ! $user->isVerified()) {
-                return response()->json(['error' => 'Only verified users can modify the admin field'], 409);
+                return $this->errorResponse('Only verified users can modify the admin field', 409);
             }
             $user->admin = $request->admin;
         }
 
         if ( ! $user->isDirty()) {
-            return response()->json(['error' => 'You need to specify a different value to update user data'], 422);
+            return $this->errorResponse('You need to specify a different value to update user data', 422);
         }
         $user->save();
 
-        return response()->json(['data' => $user], 200);
+        return $this->returnOne($user);
     }
 
     /**
      * Remove the specified resource from storage.
      *
      * @param int $id
-     * @return \Illuminate\Http\Response
+     * @return JsonResponse
      */
     public function destroy($id)
     {
@@ -119,6 +122,6 @@ class UserController extends Controller
 
         $user->delete();
 
-        return response()->json(['data' => $user], 200);
+        return $this->returnOne($user);
     }
 }
