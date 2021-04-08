@@ -98,7 +98,7 @@ class UserController extends ApiController
             $user->admin = $request->admin;
         }
 
-        if ( ! $user->isDirty()) {
+        if ($user->isClean()) {
             return $this->errorResponse('You need to specify a different value to update user data', 422);
         }
         $user->save();
