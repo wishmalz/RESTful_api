@@ -19,6 +19,7 @@ class CreateTransactionsTable extends Migration
             $table->unsignedBigInteger('product_id');
             $table->unsignedBigInteger('buyer_id');
             $table->timestamps();
+            $table->softDeletes();
 
             $table->foreign('product_id')
                 ->references('id')
