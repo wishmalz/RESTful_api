@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Transaction;
 use App\Http\Controllers\ApiController;
 use App\Http\Controllers\Controller;
 use App\Transaction;
+use App\Transformers\TransactionTransformer;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 

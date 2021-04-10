@@ -5,6 +5,7 @@ namespace App\Http\Controllers\User;
 use App\Http\Controllers\ApiController;
 use App\Http\Controllers\Controller;
 use App\Mail\UserCreated;
+use App\Transformers\UserTransformer;
 use App\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -13,6 +14,13 @@ use Illuminate\Support\Facades\Mail;
 
 class UserController extends ApiController
 {
+    public function __construct()
+    {
+        parent::__construct();
+
+        $this->middleware('transform.input:' . UserTransformer::class)->only(['store', 'update']);
+    }
+
     /**
      * Display a listing of the resource.
      *
@@ -149,7 +157,7 @@ class UserController extends ApiController
             return $this->errorResponse('This user is already verified', 409);
         }
 
-        retry(5, function() use ($user) {
+        retry(5, function () use ($user) {
             Mail::to($user)->send(new UserCreated($user));
         }, 100);
 
