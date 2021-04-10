@@ -9,9 +9,8 @@ class SignatureMiddleware
     /**
      * Handle an incoming request.
      *
-     * @param \Illuminate\Http\Request $request
-     * @param Closure $next
-     * @param string $headerName
+     * @param  \Illuminate\Http\Request  $request
+     * @param  \Closure  $next
      * @return mixed
      */
     public function handle($request, Closure $next, $headerName = 'X-Name')

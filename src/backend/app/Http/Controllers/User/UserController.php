@@ -2,35 +2,47 @@
 
 namespace App\Http\Controllers\User;
 
-use App\Http\Controllers\ApiController;
-use App\Http\Controllers\Controller;
-use App\Mail\UserCreated;
 use App\User;
-use Illuminate\Http\JsonResponse;
+use App\Mail\UserCreated;
 use Illuminate\Http\Request;
-use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Mail;
+use App\Transformers\UserTransformer;
+use App\Http\Controllers\ApiController;
 
 class UserController extends ApiController
 {
+    public function __construct()
+    {
+        $this->middleware('client.credentials')->only(['resend']);
+        $this->middleware('auth:api')->except(['showRegisterForm', 'store', 'verify', 'resend']);
+        $this->middleware('transform.input:' . UserTransformer::class)->only(['update']);
+        $this->middleware('scope:manage-account')->only(['show', 'update']);
+        $this->middleware('can:view,user')->only('show');
+        $this->middleware('can:update,user')->only('update');
+        $this->middleware('can:delete,user')->only('destroy');
+    }
+
     /**
      * Display a listing of the resource.
      *
-     * @return JsonResponse
+     * @return \Illuminate\Http\Response
      */
     public function index()
     {
+        $this->allowedAdminAction();
+
         $users = User::all();
 
         return $this->returnAll($users);
+        // return $users;
     }
-
 
     /**
      * Store a newly created resource in storage.
      *
-     * @param Request $request
-     * @return JsonResponse
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\Response
      */
     public function store(Request $request)
     {
@@ -50,14 +62,21 @@ class UserController extends ApiController
 
         $user = User::create($data);
 
-        return $this->returnOne($user, 201);
+        Auth::login($user);
+
+        return redirect('/home');
+    }
+
+    public function showRegisterForm()
+    {
+        return view('auth.register');
     }
 
     /**
      * Display the specified resource.
      *
-     * @param User $user
-     * @return JsonResponse
+     * @param  int  $id
+     * @return \Illuminate\Http\Response
      */
     public function show(User $user)
     {
@@ -67,9 +86,9 @@ class UserController extends ApiController
     /**
      * Update the specified resource in storage.
      *
-     * @param Request $request
-     * @param User $user
-     * @return JsonResponse
+     * @param  \Illuminate\Http\Request  $request
+     * @param  int  $id
+     * @return \Illuminate\Http\Response
      */
     public function update(Request $request, User $user)
     {
@@ -83,7 +102,7 @@ class UserController extends ApiController
             $user->name = $request->name;
         }
 
-        if ($request->has('email') && $user->email !== $request->email) {
+        if ($request->has('email') && $user->email != $request->email) {
             $user->verified = User::UNVERIFIED_USER;
             $user->verification_token = User::generateVerificationCode();
             $user->email = $request->email;
@@ -94,15 +113,19 @@ class UserController extends ApiController
         }
 
         if ($request->has('admin')) {
-            if ( ! $user->isVerified()) {
+            $this->allowedAdminAction();
+
+            if (!$user->isVerified()) {
                 return $this->errorResponse('Only verified users can modify the admin field', 409);
             }
+
             $user->admin = $request->admin;
         }
 
-        if ($user->isClean()) {
-            return $this->errorResponse('You need to specify a different value to update user data', 422);
+        if (!$user->isDirty()) {
+            return $this->errorResponse('You need to specify a different value to update', 422);
         }
+
         $user->save();
 
         return $this->returnOne($user);
@@ -111,9 +134,8 @@ class UserController extends ApiController
     /**
      * Remove the specified resource from storage.
      *
-     * @param User $user
-     * @return JsonResponse
-     * @throws \Exception
+     * @param  int  $id
+     * @return \Illuminate\Http\Response
      */
     public function destroy(User $user)
     {
@@ -122,10 +144,13 @@ class UserController extends ApiController
         return $this->returnOne($user);
     }
 
-    /**
-     * @param $token
-     * @return JsonResponse
-     */
+    public function me(Request $request)
+    {
+        $user = $request->user();
+
+        return $this->returnOne($user);
+    }
+
     public function verify($token)
     {
         $user = User::where('verification_token', $token)->firstOrFail();
@@ -135,14 +160,9 @@ class UserController extends ApiController
 
         $user->save();
 
-        return $this->returnMessage('The account has been verified successfully');
+        return $this->returnMessage('The account has been verified succesfully');
     }
 
-    /**
-     * @param User $user
-     * @return JsonResponse
-     * @throws \Exception
-     */
     public function resend(User $user)
     {
         if ($user->isVerified()) {
@@ -150,20 +170,9 @@ class UserController extends ApiController
         }
 
         retry(5, function() use ($user) {
-            Mail::to($user)->send(new UserCreated($user));
-        }, 100);
+                Mail::to($user)->send(new UserCreated($user));
+            }, 100);
 
         return $this->returnMessage('The verification email has been resend');
-    }
-
-    /**
-     * @param Request $request
-     * @return JsonResponse
-     */
-    public function me(Request $request)
-    {
-        $user = $request->user();
-
-        return $this->returnOne($user);
     }
 }

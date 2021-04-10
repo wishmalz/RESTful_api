@@ -3,27 +3,25 @@
 namespace App;
 
 use App\Transformers\UserTransformer;
-use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Str;
+use Laravel\Passport\HasApiTokens;
 
 class User extends Authenticatable
 {
-    use Notifiable, SoftDeletes;
+    use Notifiable, HasApiTokens, SoftDeletes;
 
-    protected $dates = ['deleted_at'];
+    const VERIFIED_USER = '1';
+    const UNVERIFIED_USER = '0';
 
-    protected $table = 'users';
-
-    public const VERIFIED_USER = '1';
-    public const UNVERIFIED_USER = '0';
-
-    public const ADMIN_USER = 'true';
-    public const REGULAR_USER = 'false';
+    const ADMIN_USER = 'true';
+    const REGULAR_USER = 'false';
 
     public $transformer = UserTransformer::class;
+    protected $table = 'users';
+    protected $dates = ['deleted_at'];
 
     /**
      * The attributes that are mass assignable.
@@ -31,7 +29,12 @@ class User extends Authenticatable
      * @var array
      */
     protected $fillable = [
-        'name', 'email', 'password', 'verified', 'verification_token', 'admin'
+        'name',
+        'email',
+        'password',
+        'verified',
+        'verification_token',
+        'admin',
     ];
 
     /**
@@ -40,32 +43,10 @@ class User extends Authenticatable
      * @var array
      */
     protected $hidden = [
-        'password', 'remember_token', 'verification_token'
+        'password',
+        'remember_token',
+        'verification_token',
     ];
-
-    /**
-     * The attributes that should be cast to native types.
-     *
-     * @var array
-     */
-    protected $casts = [
-        'email_verified_at' => 'datetime',
-    ];
-
-    public function isVerified()
-    {
-        return $this->verified == self::VERIFIED_USER;
-    }
-
-    public function isAdmin()
-    {
-        return $this->admin == self::ADMIN_USER;
-    }
-
-    public static function generateVerificationCode()
-    {
-        return Str::random(40);
-    }
 
     public function setNameAttribute($name)
     {
@@ -80,5 +61,20 @@ class User extends Authenticatable
     public function setEmailAttribute($email)
     {
         $this->attributes['email'] = strtolower($email);
+    }
+
+    public function isVerified()
+    {
+        return $this->verified == User::VERIFIED_USER;
+    }
+
+    public function isAdmin()
+    {
+        return $this->admin == User::ADMIN_USER;
+    }
+
+    public static function generateVerificationCode()
+    {
+        return Str::random(40);
     }
 }
