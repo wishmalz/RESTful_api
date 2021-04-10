@@ -2,14 +2,15 @@
 
 namespace App\Scopes;
 
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Scope;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Model;
 
 class BuyerScope implements Scope
 {
-    public function apply(Builder $builder, Model $model)
-    {
-        $builder->has('transactions');
-    }
+	public function apply(Builder $builder, Model $model)
+	{
+		$builder->has('transactions');
+	}
+
 }

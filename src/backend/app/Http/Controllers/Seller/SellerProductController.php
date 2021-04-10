@@ -2,15 +2,15 @@
 
 namespace App\Http\Controllers\Seller;
 
-use App\Http\Controllers\ApiController;
-use App\Http\Controllers\Controller;
-use App\Product;
-use App\Seller;
-use App\Transformers\ProductTransformer;
 use App\User;
+use App\Seller;
+use App\Product;
 use Illuminate\Http\Request;
-use Illuminate\Http\Response;
+use App\Http\Controllers\ApiController;
 use Illuminate\Support\Facades\Storage;
+use App\Transformers\ProductTransformer;
+use Illuminate\Auth\Access\AuthorizationException;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 
 class SellerProductController extends ApiController
 {
@@ -19,27 +19,36 @@ class SellerProductController extends ApiController
         parent::__construct();
 
         $this->middleware('transform.input:' . ProductTransformer::class)->only(['store', 'update']);
+        $this->middleware('scope:manage-products')->except('index');
+
+        $this->middleware('can:view,seller')->only('index');
+        $this->middleware('can:sale,seller')->only('store');
+        $this->middleware('can:edit-product,seller')->only('update');
+        $this->middleware('can:delete-product,seller')->only('destroy');
     }
+
     /**
      * Display a listing of the resource.
      *
-     * @param Seller $seller
-     * @return \Illuminate\Http\JsonResponse
+     * @return \Illuminate\Http\Response
      */
     public function index(Seller $seller)
     {
-        $products = $seller->products;
+        if (request()->user()->tokenCan('read-general') || request()->user()->tokenCan('manage-products')) {
+            $products = $seller->products;
 
-        return $this->returnAll($products);
+            return $this->returnAll($products);
+        }
+
+        throw new AuthorizationException('Invalid scope(s)');
+
     }
 
     /**
      * Store a newly created resource in storage.
      *
-     * @param \Illuminate\Http\Request $request
-     * @param User $seller
-     * @return \Illuminate\Http\JsonResponse
-     * @throws \Illuminate\Validation\ValidationException
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\Response
      */
     public function store(Request $request, User $seller)
     {
@@ -66,11 +75,9 @@ class SellerProductController extends ApiController
     /**
      * Update the specified resource in storage.
      *
-     * @param \Illuminate\Http\Request $request
-     * @param \App\Seller $seller
-     * @param Product $product
-     * @return \Illuminate\Http\JsonResponse
-     * @throws \Illuminate\Validation\ValidationException
+     * @param  \Illuminate\Http\Request  $request
+     * @param  \App\Seller  $seller
+     * @return \Illuminate\Http\Response
      */
     public function update(Request $request, Seller $seller, Product $product)
     {
@@ -116,10 +123,8 @@ class SellerProductController extends ApiController
     /**
      * Remove the specified resource from storage.
      *
-     * @param \App\Seller $seller
-     * @param Product $product
-     * @return \Illuminate\Http\JsonResponse
-     * @throws \Exception
+     * @param  \App\Seller  $seller
+     * @return \Illuminate\Http\Response
      */
     public function destroy(Seller $seller, Product $product)
     {
@@ -131,10 +136,6 @@ class SellerProductController extends ApiController
         return $this->returnOne($product);
     }
 
-    /**
-     * @param Seller $seller
-     * @param Product $product
-     */
     protected function checkSeller(Seller $seller, Product $product)
     {
         if ($seller->id != $product->seller_id) {

@@ -8,39 +8,22 @@ use League\Fractal\TransformerAbstract;
 class ProductTransformer extends TransformerAbstract
 {
     /**
-     * List of resources to automatically include
+     * A Fractal transformer.
      *
-     * @var array
-     */
-    protected $defaultIncludes = [
-        //
-    ];
-
-    /**
-     * List of resources possible to include
-     *
-     * @var array
-     */
-    protected $availableIncludes = [
-        //
-    ];
-
-    /**
-     * @param Product $product
      * @return array
      */
     public function transform(Product $product)
     {
         return [
-            'identifier' => (int) $product->id,
-            'title' => (string) $product->name,
-            'details' => (string) $product->description,
-            'stock' => (int) $product->quantity,
-            'situation' => (string) $product->status,
+            'identifier' => (int)$product->id,
+            'title' => (string)$product->name,
+            'details' => (string)$product->description,
+            'stock' => (int)$product->quantity,
+            'situation' => (string)$product->status,
             'picture' => url("img/{$product->image}"),
-            'seller' => (int) $product->seller_id,
-            'creationDate' => (string) $product->created_at,
-            'lastChange' => (string) $product->updated_at,
+            'seller' => (int)$product->seller_id,
+            'creationDate' => (string)$product->created_at,
+            'lastChange' => (string)$product->updated_at,
             'deletedDate' => isset($product->deleted_at) ? (string) $product->deleted_at : null,
 
             'links' => [
@@ -68,10 +51,6 @@ class ProductTransformer extends TransformerAbstract
         ];
     }
 
-    /**
-     * @param $index
-     * @return string|null
-     */
     public static function originalAttribute($index)
     {
         $attributes = [
@@ -90,10 +69,6 @@ class ProductTransformer extends TransformerAbstract
         return isset($attributes[$index]) ? $attributes[$index] : null;
     }
 
-    /**
-     * @param $index
-     * @return string|null
-     */
     public static function transformedAttribute($index)
     {
         $attributes = [

@@ -8,35 +8,18 @@ use League\Fractal\TransformerAbstract;
 class CategoryTransformer extends TransformerAbstract
 {
     /**
-     * List of resources to automatically include
+     * A Fractal transformer.
      *
-     * @var array
-     */
-    protected $defaultIncludes = [
-        //
-    ];
-
-    /**
-     * List of resources possible to include
-     *
-     * @var array
-     */
-    protected $availableIncludes = [
-        //
-    ];
-
-    /**
-     * @param Category $category
      * @return array
      */
     public function transform(Category $category)
     {
         return [
-            'identifier' => (int) $category->id,
-            'title' => (string) $category->name,
-            'details' => (string) $category->description,
-            'creationDate' => (string) $category->created_at,
-            'lastChange' => (string) $category->updated_at,
+            'identifier' => (int)$category->id,
+            'title' => (string)$category->name,
+            'details' => (string)$category->description,
+            'creationDate' => (string)$category->created_at,
+            'lastChange' => (string)$category->updated_at,
             'deletedDate' => isset($category->deleted_at) ? (string) $category->deleted_at : null,
 
             'links' => [
@@ -64,10 +47,6 @@ class CategoryTransformer extends TransformerAbstract
         ];
     }
 
-    /**
-     * @param $index
-     * @return string|null
-     */
     public static function originalAttribute($index)
     {
         $attributes = [
@@ -82,10 +61,6 @@ class CategoryTransformer extends TransformerAbstract
         return isset($attributes[$index]) ? $attributes[$index] : null;
     }
 
-    /**
-     * @param $index
-     * @return string|null
-     */
     public static function transformedAttribute($index)
     {
         $attributes = [

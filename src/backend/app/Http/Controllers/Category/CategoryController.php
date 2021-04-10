@@ -3,24 +3,23 @@
 namespace App\Http\Controllers\Category;
 
 use App\Category;
-use App\Http\Controllers\ApiController;
-use App\Http\Controllers\Controller;
-use App\Transformers\CategoryTransformer;
-use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use App\Http\Controllers\ApiController;
+use App\Transformers\CategoryTransformer;
 
 class CategoryController extends ApiController
 {
     public function __construct()
     {
-        parent::__construct();
-
+        $this->middleware('client.credentials')->only(['index', 'show']);
+        $this->middleware('auth:api')->except(['index', 'show']);
         $this->middleware('transform.input:' . CategoryTransformer::class)->only(['store', 'update']);
     }
+
     /**
      * Display a listing of the resource.
      *
-     * @return JsonResponse
+     * @return \Illuminate\Http\Response
      */
     public function index()
     {
@@ -32,27 +31,30 @@ class CategoryController extends ApiController
     /**
      * Store a newly created resource in storage.
      *
-     * @param Request $request
-     * @return JsonResponse
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\Response
      */
     public function store(Request $request)
     {
+        $this->allowedAdminAction();
+
         $rules = [
             'name' => 'required',
             'description' => 'required',
         ];
+
         $this->validate($request, $rules);
 
-        $category = Category::create($request->all());
+        $newCategory = Category::create($request->all());
 
-        return $this->returnOne($category, 201);
+        return $this->returnOne($newCategory, 201);
     }
 
     /**
      * Display the specified resource.
      *
-     * @param Category $category
-     * @return JsonResponse
+     * @param  \App\Category  $category
+     * @return \Illuminate\Http\Response
      */
     public function show(Category $category)
     {
@@ -62,22 +64,23 @@ class CategoryController extends ApiController
     /**
      * Update the specified resource in storage.
      *
-     * @param Request $request
-     * @param Category $category
-     * @return JsonResponse
+     * @param  \Illuminate\Http\Request  $request
+     * @param  \App\Category  $category
+     * @return \Illuminate\Http\Response
      */
     public function update(Request $request, Category $category)
     {
-        $category->fill($request->only(
-            [
-                'name',
-                'description'
-            ]
-        ));
+        $this->allowedAdminAction();
+
+        $category->fill($request->only([
+            'name',
+            'description',
+        ]));
 
         if ($category->isClean()) {
-            return $this->errorResponse('You need to specify different value to update.', 422);
+            return $this->errorResponse('You need to specify any different value to update', 422);
         }
+
         $category->save();
 
         return $this->returnOne($category);
@@ -86,11 +89,13 @@ class CategoryController extends ApiController
     /**
      * Remove the specified resource from storage.
      *
-     * @param Category $category
-     * @return JsonResponse
+     * @param  \App\Category  $category
+     * @return \Illuminate\Http\Response
      */
     public function destroy(Category $category)
     {
+        $this->allowedAdminAction();
+
         $category->delete();
 
         return $this->returnOne($category);

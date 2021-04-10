@@ -8,36 +8,19 @@ use League\Fractal\TransformerAbstract;
 class SellerTransformer extends TransformerAbstract
 {
     /**
-     * List of resources to automatically include
+     * A Fractal transformer.
      *
-     * @var array
-     */
-    protected $defaultIncludes = [
-        //
-    ];
-
-    /**
-     * List of resources possible to include
-     *
-     * @var array
-     */
-    protected $availableIncludes = [
-        //
-    ];
-
-    /**
-     * @param Seller $seller
      * @return array
      */
     public function transform(Seller $seller)
     {
         return [
-            'identifier' => (int) $seller->id,
-            'name' => (string) $seller->name,
-            'email' => (string) $seller->email,
-            'isVerified' => (int) $seller->verified,
-            'creationDate' => (string) $seller->created_at,
-            'lastChange' => (string) $seller->updated_at,
+            'identifier' => (int)$seller->id,
+            'name' => (string)$seller->name,
+            'email' => (string)$seller->email,
+            'isVerified' => (int)$seller->verified,
+            'creationDate' => (string)$seller->created_at,
+            'lastChange' => (string)$seller->updated_at,
             'deletedDate' => isset($seller->deleted_at) ? (string) $seller->deleted_at : null,
 
             'links' => [
@@ -69,10 +52,6 @@ class SellerTransformer extends TransformerAbstract
         ];
     }
 
-    /**
-     * @param $index
-     * @return string|null
-     */
     public static function originalAttribute($index)
     {
         $attributes = [
@@ -88,10 +67,6 @@ class SellerTransformer extends TransformerAbstract
         return isset($attributes[$index]) ? $attributes[$index] : null;
     }
 
-    /**
-     * @param $index
-     * @return string|null
-     */
     public static function transformedAttribute($index)
     {
         $attributes = [
